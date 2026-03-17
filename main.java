@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -15,18 +16,25 @@ public class Main {
         System.out.println("Server running at http://localhost:8000");
     }
 
-    static class MyHandler implements HttpHandler {
-        public void handle(HttpExchange t) throws IOException {
-            String response = new String(
-                java.nio.file.Files.readAllBytes(
-                    java.nio.file.Paths.get("index.html")
-                )
-            );
+  static class MyHandler implements HttpHandler {
+    public void handle(HttpExchange t) throws IOException {
+        File file = new File("index.html");
 
-            t.sendResponseHeaders(200, response.length());
+        if (!file.exists()) {
+            String response = "index.html not found!";
+            t.sendResponseHeaders(404, response.length());
             OutputStream os = t.getResponseBody();
             os.write(response.getBytes());
             os.close();
+            return;
         }
+
+        byte[] response = java.nio.file.Files.readAllBytes(file.toPath());
+
+        t.sendResponseHeaders(200, response.length);
+        OutputStream os = t.getResponseBody();
+        os.write(response);
+        os.close();
+     }
     }
 }
